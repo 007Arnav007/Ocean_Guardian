@@ -86,6 +86,29 @@ function googleTranslateElementInit() {
     }, 'google_translate_element');
 }
 
+/**
+ * Utility function to force Google Translate to re-scan for new content.
+ * This is crucial for dynamically loaded elements like map popups.
+ */
+function translateMapContent() {
+    if (typeof google === 'object' && google.translate && google.translate.TranslateElement) {
+        // Remove and re-add the element to force a refresh of the translation script's content scan.
+        const translateElement = document.getElementById('google_translate_element');
+        const parent = translateElement.parentElement;
+        
+        // Clear the content of the container
+        translateElement.innerHTML = '';
+        
+        // Re-initialize the widget. This forces a re-scan of the DOM.
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: true
+        }, 'google_translate_element');
+    }
+}
+
+
 // ===================
 // INITIALIZATION
 // ===================
@@ -110,6 +133,8 @@ function setupEventListeners() {
         if (event.target.classList.contains('modal')) {
             event.target.classList.remove('show');
             document.body.style.overflow = '';
+            // Force translate refresh after modal closes in case the translation was broken
+            translateMapContent();
         }
     });
 
@@ -119,6 +144,11 @@ function setupEventListeners() {
             closeAllModals();
         }
     });
+    
+    // Fix: Force translate refresh when any map popup opens
+    if (map) {
+        map.on('popupopen', translateMapContent);
+    }
 }
 
 function loadMockData() {
@@ -151,6 +181,9 @@ function initializeMap() {
             reverseGeocodeLookup(lat, lng);
         }
     });
+    
+    // Fix: Add map popup event listener for translation
+    map.on('popupopen', translateMapContent);
 }
 
 function updateMapMarkers() {
@@ -820,6 +853,9 @@ function switchView(view) {
     if (view === 'map') {
         document.getElementById('mapView').style.display = 'block';
         setTimeout(() => map.invalidateSize(), 100);
+        
+        // FIX: Force Google Translate to re-scan content on map view activation
+        translateMapContent();
     } else if (view === 'dashboard') {
         document.getElementById('dashboardView').classList.add('active');
     }
