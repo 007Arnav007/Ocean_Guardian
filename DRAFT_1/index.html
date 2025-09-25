@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Guardian - Integrated Hazard Reporting Platform</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="#" class="logo" aria-label="Ocean Guardian Home">
+                <i class="fas fa-water" aria-hidden="true"></i>
+                Ocean Guardian
+            </a>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="#" onclick="switchView('map')" aria-label="View Map">Map</a></li>
+                <li class="nav-item"><a href="#" onclick="switchView('dashboard')" aria-label="View Dashboard">Dashboard</a></li>
+                <li class="nav-item"><a href="#" onclick="openReportModal()" aria-label="Report Incident">Report</a></li>
+                <li class="nav-item"><a href="#" onclick="showAlerts()" aria-label="View Alerts">Alerts</a></li>
+            </ul>
+            <div class="user-actions">
+                <div id="google_translate_element" style="padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.08); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px);"></div>
+                <div class="user-location" id="userLocation">
+                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                    <span>Detecting location...</span>
+                </div>
+                <button class="btn btn-secondary" onclick="openAuthModal()" id="authBtn" aria-label="Sign In">
+                    <i class="fas fa-user" aria-hidden="true"></i>
+                    Sign In
+                </button>
+                <button class="btn btn-primary" onclick="openReportModal()" aria-label="Report Incident">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    Report
+                </button>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle mobile menu">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">Live Ocean Monitoring</h1>
+                <p class="sidebar-subtitle">Real-time hazard tracking and community reporting</p>
+            </div>
+
+            <div class="sidebar-content">
+                <section class="feature-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                        Current Status
+                    </h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number" id="activeReports">127</span>
+                            <span class="stat-label">Active Reports</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="verifiedIncidents">89</span>
+                            <span class="stat-label">Verified</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="activeUsers">2,341</span>
+                            <span class="stat-label">Active Users</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="alertsIssued">15</span>
+                            <span class="stat-label">Alerts Today</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="feature-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-filter" aria-hidden="true"></i>
+                        Filter Reports
+                    </h2>
+                    <div class="filter-controls">
+                        <div class="filter-row">
+                            <button class="filter-chip active" onclick="filterReports('all')" data-filter="all">All Reports</button>
+                            <button class="filter-chip" onclick="filterReports('tsunami')" data-filter="tsunami">Tsunami</button>
+                            <button class="filter-chip" onclick="filterReports('cyclone')" data-filter="cyclone">Cyclone</button>
+                            <button class="filter-chip" onclick="filterReports('flooding')" data-filter="flooding">Flooding</button>
+                        </div>
+                        <div class="filter-row">
+                            <button class="filter-chip" onclick="filterReports('verified')" data-filter="verified">Verified Only</button>
+                            <button class="filter-chip" onclick="filterReports('recent')" data-filter="recent">Last 24h</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="feature-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-comments" aria-hidden="true"></i>
+                        Social Intelligence
+                    </h2>
+                    <div class="social-feed" id="socialFeed">
+                        <div class="social-post sentiment-negative">
+                            <div class="post-meta">
+                                <i class="fab fa-twitter" aria-hidden="true"></i>
+                                <span>@weatheralert_in</span>
+                                <span>•</span>
+                                <span>2 min ago</span>
+                            </div>
+                            <div class="post-content">Heavy rainfall reported in coastal Karnataka. Citizens advised to stay indoors and avoid low-lying areas.</div>
+                        </div>
+
+                        <div class="social-post sentiment-neutral">
+                            <div class="post-meta">
+                                <i class="fab fa-facebook" aria-hidden="true"></i>
+                                <span>Indian Coast Guard</span>
+                                <span>•</span>
+                                <span>15 min ago</span>
+                            </div>
+                            <div class="post-content">Routine patrol operations continue along the western coast. All vessels are advised to monitor weather conditions.</div>
+                        </div>
+
+                        <div class="social-post sentiment-positive">
+                            <div class="post-meta">
+                                <i class="fab fa-instagram" aria-hidden="true"></i>
+                                <span>@mumbai_rains</span>
+                                <span>•</span>
+                                <span>1 hour ago</span>
+                            </div>
+                            <div class="post-content">Sunshine breaking through clouds over Marine Drive! Seems like the weather is clearing up. 🌅</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </aside>
+
+        <div class="map-container" id="mapView">
+            <div id="map" role="application" aria-label="Interactive hazard map"></div>
+
+            <div class="map-controls">
+                <div class="control-panel">
+                    <h3>Layer Controls</h3>
+                    <label class="form-label">
+                        <input type="checkbox" checked onchange="toggleLayer('reports')">
+                        Incident Reports
+                    </label>
+                    <label class="form-label">
+                        <input type="checkbox" checked onchange="toggleLayer('weather')">
+                        Weather Data
+                    </label>
+                    <label class="form-label">
+                        <input type="checkbox" onchange="toggleLayer('social')">
+                        Social Media
+                    </label>
+                </div>
+            </div>
+
+            <div class="legend">
+                <h3 class="legend-title">Report Types</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #dc3545;"></div>
+                    <span>High Severity</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ff6b35;"></div>
+                    <span>Medium Severity</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #28a745;"></div>
+                    <span>Low Severity</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #17a2b8;"></div>
+                    <span>Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-view" id="dashboardView">
+            <div class="dashboard-grid">
+                <div class="chart-container">
+                    <h3 class="chart-title">Reports Over Time</h3>
+                    <canvas id="timelineChart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">Incident Types</h3>
+                    <canvas id="incidentChart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">Verification Status</h3>
+                    <canvas id="verificationChart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">Regional Activity</h3>
+                    <canvas id="regionalChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="authModal" class="modal" role="dialog" aria-labelledby="authModalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="authModalTitle">Sign In / Register</h2>
+                <span class="close" onclick="closeModal('authModal')" aria-label="Close modal">&times;</span>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('signin')" id="signinTab">Sign In</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')" id="registerTab">Register</button>
+            </div>
+
+            <form class="auth-form active" id="signinForm">
+                <div class="form-group">
+                    <label class="form-label" for="signinPhone">Phone Number</label>
+                    <input type="tel" id="signinPhone" class="form-input" placeholder="+91 9876543210" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="signinSubmit">
+                    <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                    Send OTP
+                </button>
+            </form>
+
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label class="form-label" for="registerName">Full Name</label>
+                    <input type="text" id="registerName" class="form-input" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerPhone">Phone Number</label>
+                    <input type="tel" id="registerPhone" class="form-input" placeholder="+91 9876543210" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerEmail">Email (Optional)</label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="your@email.com">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="registerSubmit">
+                    <i class="fas fa-user-plus" aria-hidden="true"></i>
+                    Register & Send OTP
+                </button>
+            </form>
+
+            <form class="auth-form" id="otpForm">
+                <div class="form-group">
+                    <label class="form-label">Enter 6-Digit OTP</label>
+                    <div class="otp-input">
+                        <input type="text" class="otp-digit" maxlength="1" oninput="moveToNext(this, 0)">
+                        <input type="text" class="otp-digit" maxlength="1" oninput="moveToNext(this, 1)">
+                        <input type="text" class="otp-digit" maxlength="1" oninput="moveToNext(this, 2)">
+                        <input type="text" class="otp-digit" maxlength="1" oninput="moveToNext(this, 3)">
+                        <input type="text" class="otp-digit" maxlength="1" oninput="moveToNext(this, 4)">
+                        <input type="text" class="otp-digit" maxlength="1" oninput="moveToNext(this, 5)">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="otpSubmit">
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                    Verify OTP
+                </button>
+                <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="resendOTP()" id="resendOTP">
+                    <i class="fas fa-redo" aria-hidden="true"></i>
+                    Resend OTP
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal" role="dialog" aria-labelledby="reportModalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="reportModalTitle">Report Ocean Hazard</h2>
+                <span class="close" onclick="closeModal('reportModal')" aria-label="Close modal">&times;</span>
+            </div>
+
+            <form id="reportForm">
+                <div class="form-group">
+                    <label class="form-label" for="incidentType">Incident Type</label>
+                    <select id="incidentType" class="form-select" required>
+                        <option value="">Select incident type</option>
+                        <option value="tsunami">Tsunami Warning</option>
+                        <option value="cyclone">Cyclone/Storm</option>
+                        <option value="flooding">Coastal Flooding</option>
+                        <option value="erosion">Beach Erosion</option>
+                        <option value="pollution">Water Pollution</option>
+                        <option value="debris">Marine Debris</option>
+                        <option value="wildlife">Marine Wildlife Issue</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="severity">Severity Level</label>
+                    <input type="range" id="severity" class="severity-slider" min="1" max="5" value="3" oninput="updateSeverityLabel()">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        <span>Low</span>
+                        <span id="severityLabel">Medium</span>
+                        <span>Critical</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="location">Location</label>
+                    <input type="text" id="location" class="form-input" placeholder="Click on map or enter address" required>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="getCurrentLocation()">
+                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                        Use Current Location
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea id="description" class="form-textarea" rows="4" placeholder="Describe the incident in detail..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Upload Media</label>
+                    <div class="file-upload" onclick="document.getElementById('mediaUpload').click()">
+                        <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+                        <p>Click to upload photos or videos</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Max 10MB per file</p>
+                    </div>
+                    <input type="file" id="mediaUpload" multiple accept="image/*,video/*" style="display: none;" onchange="handleFileUpload(this)">
+                    <div id="uploadProgress" class="progress-bar" style="display: none;">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div id="uploadedFiles"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="shareWithAuthorities" checked>
+                        Share with relevant authorities (INCOIS, Coast Guard)
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="allowPublicView" checked>
+                        Allow public visibility for community awareness
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitReport">
+                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                    Submit Report
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="alertsModal" class="modal" role="dialog" aria-labelledby="alertsModalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="alertsModalTitle">Critical Alerts</h2>
+                <span class="close" onclick="closeModal('alertsModal')" aria-label="Close modal">&times;</span>
+            </div>
+            <div id="alerts-container">
+                <p>No critical alerts at this time.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="notifications" id="notifications" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
