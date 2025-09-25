@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Link to external CSS file -->
     <link rel="stylesheet" href="styles.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -188,27 +187,27 @@
             <div class="dashboard-grid">
                 <div class="chart-container">
                     <h3 class="chart-title">Reports Over Time</h3>
-                    <canvas id="timelineChart"></canvas>
+                    <canvas id="timelineChart" style="height: 300px;"></canvas>
                 </div>
 
                 <div class="chart-container">
                     <h3 class="chart-title">Incident Types</h3>
-                    <canvas id="incidentChart"></canvas>
+                    <canvas id="incidentChart" style="height: 300px;"></canvas>
                 </div>
 
                 <div class="chart-container">
                     <h3 class="chart-title">Verification Status</h3>
-                    <canvas id="verificationChart"></canvas>
+                    <canvas id="verificationChart" style="height: 300px;"></canvas>
                 </div>
 
                 <div class="chart-container">
                     <h3 class="chart-title">Regional Activity</h3>
-                    <canvas id="regionalChart"></canvas>
+                    <canvas id="regionalChart" style="height: 300px;"></canvas>
                 </div>
                 
                 <div class="chart-container wide-chart">
                     <h3 class="chart-title">Trust Score Distribution</h3>
-                    <canvas id="trustScoreChart"></canvas>
+                    <canvas id="trustScoreChart" style="height: 300px;"></canvas>
                 </div>
 
                 <div class="stats-container chart-container">
@@ -396,7 +395,6 @@
 
     <div class="notifications" id="notifications" role="region" aria-label="Notifications" aria-live="polite"></div>
 
-    <!-- Link to external JavaScript file -->
     <script src="script.js"></script>
 </body>
 </html>

@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     initializeCharts();
     startRealTimeUpdates();
-    detectUserLocation();
+    detectUserLocation(); // This now uses IP-API
     loadMockData();
     setupEventListeners();
 });
@@ -145,10 +145,10 @@ function initializeMap() {
         if (document.getElementById('reportModal').classList.contains('show')) {
             const lat = e.latlng.lat.toFixed(6);
             const lng = e.latlng.lng.toFixed(6);
-            document.getElementById('location').value = `${lat}, ${lng}`;
+            document.getElementById('location').value = `(${lat}, ${lng})`;
 
-            // Reverse geocoding simulation
-            reverseGeocode(lat, lng);
+            // Simulate reverse geocoding to get a readable address
+            reverseGeocodeLookup(lat, lng);
         }
     });
 }
@@ -465,6 +465,62 @@ function updateSeverityLabel() {
     document.getElementById('severityLabel').textContent = labels[severity] || 'Medium';
 }
 
+// --- UPDATED: Uses ip-api.com to get approximate current location ---
+function detectUserLocation() {
+    const userLocationElem = document.getElementById('userLocation');
+    
+    // Fetch data from ip-api.com (No API Key needed)
+    fetch('http://ip-api.com/json/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const cityName = data.city;
+                const regionName = data.regionName;
+                const lat = data.lat.toFixed(4);
+                const lon = data.lon.toFixed(4);
+
+                // Display nearest town/city
+                userLocationElem.querySelector('span').textContent = `${cityName}, ${regionName}`;
+                
+                // Set coordinates for hover display
+                userLocationElem.title = `Lat: ${lat}, Lng: ${lon}`;
+                
+                // Only display if location is available
+                userLocationElem.style.display = 'flex';
+                
+                // If the report modal is open, update the location field (simulating default report location)
+                if (document.getElementById('reportModal').classList.contains('show')) {
+                    document.getElementById('location').value = `${cityName} (${lat}, ${lon})`;
+                }
+            } else {
+                userLocationElem.querySelector('span').textContent = 'Location unavailable';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching IP location:', error);
+            userLocationElem.querySelector('span').textContent = 'Location failed';
+        });
+}
+
+// --- NEW/MODIFIED: Simulates location lookup for manual/map click entry ---
+function reverseGeocodeLookup(lat, lng) {
+    // This function can remain a simulation or be replaced by a reverse geocoding API if needed.
+    const locations = [
+        'Marine Drive, Mumbai',
+        'Marina Beach, Chennai',
+        'Calangute Beach, Goa',
+        'Kovalam Beach, Kerala',
+        'Puri Beach, Odisha'
+    ];
+    // Simulate lookup based on proximity or just pick a random one
+    const location = locations[Math.floor(Math.random() * locations.length)];
+    
+    // Update the location input field with the coordinates and a simulated address.
+    document.getElementById('location').value = `${location} (${lat}, ${lng})`;
+}
+
+// getCurrentLocation uses browser geolocation, but we can't fully rely on it being enabled/accurate.
+// If the user presses the 'Use Current Location' button, we still rely on browser API for most accurate data.
 function getCurrentLocation() {
     if (navigator.geolocation) {
         setButtonLoading('getCurrentLocation', true);
@@ -472,34 +528,27 @@ function getCurrentLocation() {
             function(position) {
                 const lat = position.coords.latitude.toFixed(6);
                 const lng = position.coords.longitude.toFixed(6);
-                document.getElementById('location').value = `(${lat}, ${lng})`;
-                reverseGeocode(lat, lng);
+                
+                // Use reverse geocode to get a readable address and update input
+                reverseGeocodeLookup(lat, lng); 
+                
                 setButtonLoading('getCurrentLocation', false);
             },
             function(error) {
                 setButtonLoading('getCurrentLocation', false);
-                showNotification('Unable to get location. Please enter manually.', 'warning');
+                showNotification('Unable to get precise location. Using IP-based location.', 'warning');
+                
+                // Fallback to IP-API data already loaded in the header if geolocation fails
+                const locText = document.getElementById('userLocation').querySelector('span').textContent;
+                const coords = document.getElementById('userLocation').title.match(/Lat:\s*([0-9.-]+),\s*Lng:\s*([0-9.-]+)/);
+                if (coords) {
+                    document.getElementById('location').value = `${locText} (${coords[1]}, ${coords[2]})`;
+                }
             }
         );
     } else {
         showNotification('Geolocation not supported by browser', 'danger');
     }
-}
-
-function reverseGeocode(lat, lng) {
-    // Simulate reverse geocoding
-    const locations = [
-        'Mumbai, Maharashtra',
-        'Chennai, Tamil Nadu',
-        'Goa',
-        'Kochi, Kerala',
-        'Puri, Odisha'
-    ];
-    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-    const userLocationElem = document.getElementById('userLocation');
-    userLocationElem.querySelector('span').textContent = randomLocation;
-    userLocationElem.title = `Lat: ${lat}, Lng: ${lng}`;
-    userLocationElem.style.display = 'flex';
 }
 
 function handleFileUpload(input) {
@@ -892,34 +941,6 @@ function getTimeAgo(timestamp) {
     if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
     return 'Just now';
-}
-
-function detectUserLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const lat = position.coords.latitude.toFixed(4);
-                const lng = position.coords.longitude.toFixed(4);
-                
-                const locations = [
-                    'Mumbai, Maharashtra',
-                    'Chennai, Tamil Nadu',
-                    'Goa',
-                    'Kochi, Kerala',
-                    'Puri, Odisha'
-                ];
-                const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-
-                const userLocationElem = document.getElementById('userLocation');
-                userLocationElem.querySelector('span').textContent = randomLocation;
-                userLocationElem.title = `Lat: ${lat}, Lng: ${lng}`;
-                userLocationElem.style.display = 'flex';
-            },
-            function(error) {
-                document.querySelector('.user-location span').textContent = 'Location unavailable';
-            }
-        );
-    }
 }
 
 function updateStatistics() {
