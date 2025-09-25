@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Link to external CSS file -->
     <link rel="stylesheet" href="styles.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -29,8 +30,8 @@
                 <li class="nav-item"><a href="#" onclick="showAlerts()" aria-label="View Alerts">Alerts</a></li>
             </ul>
             <div class="user-actions">
-                <div id="google_translate_element" style="padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.08); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px);"></div>
-                <div class="user-location" id="userLocation">
+                <div id="google_translate_element" class="translate-dropdown"></div>
+                <div class="user-location" id="userLocation" title="Hover to see coordinates">
                     <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                     <span>Detecting location...</span>
                 </div>
@@ -187,23 +188,47 @@
             <div class="dashboard-grid">
                 <div class="chart-container">
                     <h3 class="chart-title">Reports Over Time</h3>
-                    <canvas id="timelineChart" width="400" height="200"></canvas>
+                    <canvas id="timelineChart"></canvas>
                 </div>
 
                 <div class="chart-container">
                     <h3 class="chart-title">Incident Types</h3>
-                    <canvas id="incidentChart" width="400" height="200"></canvas>
+                    <canvas id="incidentChart"></canvas>
                 </div>
 
                 <div class="chart-container">
                     <h3 class="chart-title">Verification Status</h3>
-                    <canvas id="verificationChart" width="400" height="200"></canvas>
+                    <canvas id="verificationChart"></canvas>
                 </div>
 
                 <div class="chart-container">
                     <h3 class="chart-title">Regional Activity</h3>
-                    <canvas id="regionalChart" width="400" height="200"></canvas>
+                    <canvas id="regionalChart"></canvas>
                 </div>
+                
+                <div class="chart-container wide-chart">
+                    <h3 class="chart-title">Trust Score Distribution</h3>
+                    <canvas id="trustScoreChart"></canvas>
+                </div>
+
+                <div class="stats-container chart-container">
+                    <h3 class="chart-title">Key Statistics</h3>
+                    <div class="stats-list">
+                        <div class="stat-item">
+                            <span class="stat-label">Average Time to Verify</span>
+                            <span class="stat-value" id="avgVerificationTime">1.5 hours</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Most Reported Type</span>
+                            <span class="stat-value" id="mostReportedType">Coastal Flooding</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">User Engagement</span>
+                            <span class="stat-value" id="userEngagement">8.2 / 10</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -371,6 +396,7 @@
 
     <div class="notifications" id="notifications" role="region" aria-label="Notifications" aria-live="polite"></div>
 
+    <!-- Link to external JavaScript file -->
     <script src="script.js"></script>
 </body>
 </html>

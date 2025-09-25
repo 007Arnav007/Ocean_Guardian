@@ -9,6 +9,7 @@ let currentUser = null;
 let currentView = 'map';
 let otpTimer = null;
 let otpCountdown = 60;
+let dashboardCharts = {};
 
 // Mock data for demonstration
 const mockReports = [
@@ -47,6 +48,30 @@ const mockReports = [
         verified: true,
         trustScore: 0.8,
         reporter: 'Local Authority'
+    },
+    {
+        id: 4,
+        type: 'flooding',
+        severity: 4,
+        location: [22.5726, 88.3639], // Kolkata
+        address: 'Hooghly Riverfront, Kolkata',
+        description: 'High tide causing minor flooding near shore.',
+        timestamp: new Date(Date.now() - 5000000),
+        verified: false,
+        trustScore: 0.6,
+        reporter: 'Community Member'
+    },
+    {
+        id: 5,
+        type: 'pollution',
+        severity: 2,
+        location: [11.6643, 92.7351], // Andaman Islands
+        address: 'Port Blair, Andaman Islands',
+        description: 'Oil slick spotted near the harbor. Small scale, being contained.',
+        timestamp: new Date(Date.now() - 86400000),
+        verified: true,
+        trustScore: 0.95,
+        reporter: 'Port Authority'
     }
 ];
 
@@ -101,6 +126,7 @@ function loadMockData() {
     updateMapMarkers();
     updateStatistics();
     updateSocialFeed();
+    updateDashboardCharts();
 }
 
 // ===================
@@ -416,6 +442,7 @@ function handleReportSubmission(e) {
         reports.unshift(newReport);
         updateMapMarkers();
         updateStatistics();
+        updateDashboardCharts();
 
         closeModal('reportModal');
         document.getElementById('reportForm').reset();
@@ -445,7 +472,7 @@ function getCurrentLocation() {
             function(position) {
                 const lat = position.coords.latitude.toFixed(6);
                 const lng = position.coords.longitude.toFixed(6);
-                document.getElementById('location').value = `${lat}, ${lng}`;
+                document.getElementById('location').value = `(${lat}, ${lng})`;
                 reverseGeocode(lat, lng);
                 setButtonLoading('getCurrentLocation', false);
             },
@@ -462,17 +489,17 @@ function getCurrentLocation() {
 function reverseGeocode(lat, lng) {
     // Simulate reverse geocoding
     const locations = [
-        'Marine Drive, Mumbai',
-        'Marina Beach, Chennai',
-        'Calangute Beach, Goa',
-        'Kovalam Beach, Kerala',
-        'Puri Beach, Odisha'
+        'Mumbai, Maharashtra',
+        'Chennai, Tamil Nadu',
+        'Goa',
+        'Kochi, Kerala',
+        'Puri, Odisha'
     ];
-
-    setTimeout(() => {
-        const location = locations[Math.floor(Math.random() * locations.length)];
-        document.getElementById('location').value = `${location} (${lat}, ${lng})`;
-    }, 1000);
+    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+    const userLocationElem = document.getElementById('userLocation');
+    userLocationElem.querySelector('span').textContent = randomLocation;
+    userLocationElem.title = `Lat: ${lat}, Lng: ${lng}`;
+    userLocationElem.style.display = 'flex';
 }
 
 function handleFileUpload(input) {
@@ -594,22 +621,35 @@ function toggleLayer(layer) {
 // DASHBOARD & CHARTS
 // ===================
 function initializeCharts() {
+    const colors = {
+        primary: '#667eea',
+        secondary: '#764ba2',
+        teal: '#008080',
+        deep: '#006666',
+        red: '#dc3545',
+        orange: '#ff6b35',
+        green: '#28a745',
+        yellow: '#ffc107',
+        blue: '#17a2b8'
+    };
+    
     // Timeline Chart
     const timeCtx = document.getElementById('timelineChart').getContext('2d');
-    new Chart(timeCtx, {
+    dashboardCharts.timeline = new Chart(timeCtx, {
         type: 'line',
         data: {
             labels: ['6h ago', '5h ago', '4h ago', '3h ago', '2h ago', '1h ago', 'Now'],
             datasets: [{
                 label: 'Reports',
                 data: [12, 19, 3, 5, 12, 8, 15],
-                borderColor: '#008080',
+                borderColor: colors.teal,
                 backgroundColor: 'rgba(0, 128, 128, 0.1)',
                 tension: 0.4
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     beginAtZero: true
@@ -620,33 +660,35 @@ function initializeCharts() {
 
     // Incident Types Chart
     const incidentCtx = document.getElementById('incidentChart').getContext('2d');
-    new Chart(incidentCtx, {
+    dashboardCharts.incident = new Chart(incidentCtx, {
         type: 'doughnut',
         data: {
             labels: ['Tsunami', 'Cyclone', 'Flooding', 'Pollution', 'Other'],
             datasets: [{
                 data: [23, 45, 67, 34, 28],
-                backgroundColor: ['#dc3545', '#ff6b35', '#ffc107', '#28a745', '#6c757d']
+                backgroundColor: [colors.red, colors.orange, colors.yellow, colors.green, colors.blue]
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
 
     // Verification Chart
     const verificationCtx = document.getElementById('verificationChart').getContext('2d');
-    new Chart(verificationCtx, {
+    dashboardCharts.verification = new Chart(verificationCtx, {
         type: 'bar',
         data: {
             labels: ['Verified', 'Pending', 'Disputed'],
             datasets: [{
                 data: [89, 38, 12],
-                backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                backgroundColor: [colors.green, colors.yellow, colors.red]
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     beginAtZero: true
@@ -657,19 +699,62 @@ function initializeCharts() {
 
     // Regional Chart
     const regionalCtx = document.getElementById('regionalChart').getContext('2d');
-    new Chart(regionalCtx, {
+    dashboardCharts.regional = new Chart(regionalCtx, {
         type: 'polarArea',
         data: {
             labels: ['West Coast', 'East Coast', 'Southern Coast', 'Island Territories'],
             datasets: [{
                 data: [65, 78, 45, 23],
-                backgroundColor: ['#667eea', '#764ba2', '#008080', '#006666']
+                backgroundColor: [colors.primary, colors.secondary, colors.teal, colors.deep]
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
+
+    // New Chart: Trust Score Distribution
+    const trustCtx = document.getElementById('trustScoreChart').getContext('2d');
+    dashboardCharts.trustScore = new Chart(trustCtx, {
+        type: 'line',
+        data: {
+            labels: ['0-0.2', '0.2-0.4', '0.4-0.6', '0.6-0.8', '0.8-1.0'],
+            datasets: [{
+                label: 'Number of Reports',
+                data: [5, 12, 35, 28, 20],
+                borderColor: colors.primary,
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateDashboardCharts() {
+    // This function would fetch real data and update charts.
+    // For now, it updates the charts with mock data based on the current `reports` array.
+    const incidentCounts = reports.reduce((acc, report) => {
+        acc[report.type] = (acc[report.type] || 0) + 1;
+        return acc;
+    }, {});
+    dashboardCharts.incident.data.datasets[0].data = [
+        incidentCounts['tsunami'] || 0,
+        incidentCounts['cyclone'] || 0,
+        incidentCounts['flooding'] || 0,
+        incidentCounts['pollution'] || 0,
+        incidentCounts['other'] || 0
+    ];
+    dashboardCharts.incident.update();
 }
 
 // ===================
@@ -787,7 +872,7 @@ function validateEmail(email) {
 }
 
 function parseLocation(locationString) {
-    const coords = locationString.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
+    const coords = locationString.match(/\((-?\d+\.?\d*),\s*(-?\d+\.?\d*)\)/);
     if (coords) {
         return [parseFloat(coords[1]), parseFloat(coords[2])];
     }
@@ -813,16 +898,22 @@ function detectUserLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
+                const lat = position.coords.latitude.toFixed(4);
+                const lng = position.coords.longitude.toFixed(4);
+                
+                const locations = [
+                    'Mumbai, Maharashtra',
+                    'Chennai, Tamil Nadu',
+                    'Goa',
+                    'Kochi, Kerala',
+                    'Puri, Odisha'
+                ];
+                const randomLocation = locations[Math.floor(Math.random() * locations.length)];
 
-                // Simulate location name lookup
-                setTimeout(() => {
-                    document.querySelector('.user-location span').textContent = 'Mumbai, Maharashtra';
-                    if (currentUser) {
-                        document.querySelector('.user-location').style.display = 'flex';
-                    }
-                }, 2000);
+                const userLocationElem = document.getElementById('userLocation');
+                userLocationElem.querySelector('span').textContent = randomLocation;
+                userLocationElem.title = `Lat: ${lat}, Lng: ${lng}`;
+                userLocationElem.style.display = 'flex';
             },
             function(error) {
                 document.querySelector('.user-location span').textContent = 'Location unavailable';
@@ -836,6 +927,17 @@ function updateStatistics() {
     document.getElementById('verifiedIncidents').textContent = reports.filter(r => r.verified).length;
     document.getElementById('activeUsers').textContent = Math.floor(Math.random() * 1000) + 2000;
     document.getElementById('alertsIssued').textContent = Math.floor(Math.random() * 20) + 10;
+    
+    // Update new statistics
+    const mostReported = reports.reduce((acc, report) => {
+        acc[report.type] = (acc[report.type] || 0) + 1;
+        return acc;
+    }, {});
+    const mostReportedType = Object.keys(mostReported).sort((a,b) => mostReported[b] - mostReported[a])[0];
+    document.getElementById('mostReportedType').textContent = mostReportedType.replace('_', ' ').split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    
+    document.getElementById('avgVerificationTime').textContent = `${(Math.random() * 2 + 1).toFixed(1)} hours`;
+    document.getElementById('userEngagement').textContent = `${(Math.random() * 2 + 8).toFixed(1)} / 10`;
 }
 
 function updateSocialFeed() {
@@ -869,12 +971,13 @@ function startRealTimeUpdates() {
         // Simulate real-time updates
         if (Math.random() > 0.7) {
             // Add new mock report occasionally
-            const types = ['tsunami', 'cyclone', 'flooding', 'pollution'];
+            const types = ['tsunami', 'cyclone', 'flooding', 'pollution', 'erosion', 'debris', 'wildlife', 'other'];
             const locations = [
                 [19.0760, 72.8777, 'Mumbai'],
                 [13.0827, 80.2707, 'Chennai'],
                 [15.2993, 74.1240, 'Goa'],
-                [8.5241, 76.9366, 'Kerala']
+                [22.5726, 88.3639, 'Kolkata'],
+                [11.6643, 92.7351, 'Andaman Islands']
             ];
 
             const randomType = types[Math.floor(Math.random() * types.length)];
@@ -898,6 +1001,7 @@ function startRealTimeUpdates() {
 
             updateMapMarkers();
             updateStatistics();
+            updateDashboardCharts();
         }
     }, 30000); // Update every 30 seconds
 }
